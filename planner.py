@@ -40,7 +40,7 @@ def create_weight_input_widget():
 def create_form_row(id_count=1):
     dropDowm = dcc.Dropdown(food, placeholder="Select Food", id=f"form-dropdown-{id_count}", className="form-dropdown")
     input = dcc.Input(placeholder="Quantity", type="number",id=f"form-input-{id_count}", className="form-input")
-    deleteButton = html.Button(children='Delete', id=f'form-delete-{id_count}', n_clicks=0, className="form-delete")
+    deleteButton = html.Button(children='Delete', id={"type": "form-delete-button", "index": f'form-delete-{id_count}'}, n_clicks=0, className="form-delete")
     row = dbc.Row(children=[dropDowm, input, deleteButton], id=f"form-row-{id_count}", className="form-row")
     return row
 

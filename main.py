@@ -156,7 +156,7 @@ def get_calorie_difference(bmr, planned_cal):
 )
 def on_submit_click(user, planDate, dropdowns, inputs, submit_button):
     contents = {}
-    planDate = planDate[:planDate.find("T")].split("-")
+    planDate = planDate[:planDate.find("T") if planDate.find("T") != -1 else len(planDate)].split("-")
     planDate = date(int(planDate[0]), int(planDate[1]), int(planDate[2]))
     for drop, inp in zip(dropdowns, inputs):
         if drop is not None and inp is not None:
@@ -182,7 +182,7 @@ def on_submit_click(user, planDate, dropdowns, inputs, submit_button):
 
 if __name__ == "__main__":
     port=33115
-    debugMode = True
+    debugMode = False
     open_browser = Timer(3, wb.open, [f"http://127.0.0.1:{port}"]).run
     openBrowserThread = th.Thread(target=open_browser)
     openBrowserThread.start()

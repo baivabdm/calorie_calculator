@@ -12,17 +12,14 @@ frontPageItems = [
     html.Div(
         id="tab-div",
         children=[
-                    dbc.Tabs(id="tab-group", active_tab="tab-planner",
+                    dbc.Tabs(
                              children=[
-                                 dbc.Tab(label="Planner", id="tab-planner"),
-                                 dbc.Tab(label="History", id="tab-history"),
-                                 dbc.Tab(label="DB Management", id="tab-db-management")
-                             ]
+                                 dbc.Tab(label="Planner", id="tab-planner", children=planner.contents),
+                                 dbc.Tab(label="History", id="tab-history", children=[]),
+                                 dbc.Tab(label="DB Management", id="tab-db-management", children=[])
+                             ],
+                             id="tab-group", active_tab = "tab-0",
                              )
                 ]
-    ),
-    html.Div(
-        id="content-div",
-        children = planner.contents
     )
     ]

@@ -3,6 +3,11 @@ import dash_bootstrap_components as dbc
 import pandas as pd
 from numpy import array
 from datetime import datetime as dt, date
+from db_utils import DbManagement
+
+dbManager = DbManagement()
+userList = dbManager.get_user_list()
+dbManager.close_connection()
 
 db = pd.read_excel("./assets/food_calorie_db.xlsx")
 food = list(db["food"])
@@ -39,13 +44,14 @@ contents = [
 
 def create_weight_input_widget():
     userLabel = html.Label("User", "user-label")
-    userDropDowm = dcc.Dropdown(["Guest"], placeholder="Select User", value="Guest", clearable=False,
+    userDropDowm = dcc.Dropdown(userList, placeholder="Select User", value="guest_user", clearable=False,
                                 id="user-dropdown", className="user-drop")
     today = dt.today()
     dateLabel = html.Label("Plan Date", "date-label")
     dateInput =  dcc.DatePickerSingle(
         id='plan-date-picker',
         min_date_allowed=date(1900, 1, 1),
+        max_date_allowed=today,
         initial_visible_month=today,
         date=today
     )

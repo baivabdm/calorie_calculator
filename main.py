@@ -1,3 +1,4 @@
+import pandas as pd
 from dash import Dash, html, dcc, callback, Output, Input, ALL, State, dash_table
 from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
@@ -7,12 +8,15 @@ import webbrowser as wb
 from threading import Timer
 import threading as th
 import numpy as np
+from db_utils import DbManagement
+from datetime import date
 
 app = Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 app.title = "Calorie Calculator and Optimizer"
 app.layout = [
     dcc.Store(id="reqd_bmr", data=[]),
     dcc.Store(id="diet-cal", data=[]),
+    dcc.Store(id="dummy-store",data=[]),
     *fp.frontPageItems]
 
 
@@ -141,6 +145,39 @@ def get_calorie_difference(bmr, planned_cal):
 
     return diff_string
 
+
+@callback(
+    Output("dummy-store", "data"),
+    State("user-dropdown", "value"),
+    State("plan-date-picker", "date"),
+    State({"type": "form-dropdown", "index": ALL}, "value"),
+    State({"type": "form-input", "index": ALL}, "value"),
+    Input("submit", "n_clicks")
+)
+def on_submit_click(user, planDate, dropdowns, inputs, submit_button):
+    contents = {}
+    planDate = planDate[:planDate.find("T")].split("-")
+    planDate = date(int(planDate[0]), int(planDate[1]), int(planDate[2]))
+    for drop, inp in zip(dropdowns, inputs):
+        if drop is not None and inp is not None:
+            if contents.get(drop, "not found") == "not found":
+                contents[drop] = [inp]
+            else:
+                contents[drop].append(inp)
+
+    if len(contents) == 0:
+        return [[], 0]
+
+    nutrients_df = pl.calculate_diet_kpis(contents)[2]
+    currentCols = list(nutrients_df.columns)
+    nutrients_df["user"] = user
+    nutrients_df["date"] = planDate
+
+    nutrients_df = nutrients_df[["user", "date"]+currentCols]
+    dbManager = DbManagement()
+    dbManager.upload_dataframe(nutrients_df, "history")
+    dbManager.close_connection()
+    return ""
 
 
 if __name__ == "__main__":

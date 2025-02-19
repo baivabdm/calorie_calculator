@@ -156,9 +156,7 @@ def get_calorie_difference(bmr, planned_cal):
 )
 def on_submit_click(user, planDate, dropdowns, inputs, submit_button):
     contents = {}
-    print(planDate)
     planDate = planDate[:planDate.find("T") if planDate.find("T") != -1 else len(planDate)].split("-")
-    print(planDate)
     planDate = date(int(planDate[0]), int(planDate[1]), int(planDate[2]))
     for drop, inp in zip(dropdowns, inputs):
         if drop is not None and inp is not None:

@@ -14,8 +14,8 @@ from datetime import date
 app = Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 app.title = "Calorie Calculator and Optimizer"
 app.layout = [
-    dcc.Store(id="reqd_bmr", data=[]),
-    dcc.Store(id="diet-cal", data=[]),
+    dcc.Store(id="reqd_bmr", data=0),
+    dcc.Store(id="diet-cal", data=0),
     dcc.Store(id="dummy-store",data=[]),
     *fp.frontPageItems]
 
@@ -72,11 +72,11 @@ def on_row_delete_click(row1_children, row2_children, n_clicks_dynamic):
 
     n_clicks_vector = np.array(n_clicks_dynamic)
     clickedButton = n_clicks_vector.argmax()+1
-    if clickedButton == 1 and len(row1_children) == 7 and n_clicks_vector.max() != 0:
+    if clickedButton == 1 and len(row1_children) == 8 and n_clicks_vector.max() != 0:
         row1_children.pop()
-    elif len(row1_children) == 6 and n_clicks_vector.max() != 0:
-        row2_children.pop(clickedButton-1)
     elif len(row1_children) == 7 and n_clicks_vector.max() != 0:
+        row2_children.pop(clickedButton-1)
+    elif len(row1_children) == 8 and n_clicks_vector.max() != 0:
         row2_children.pop(clickedButton-2)
     else:
         raise PreventUpdate
@@ -131,7 +131,8 @@ def calculate_kpis(dropdowns, inputs):
 @callback(
     Output("planner-output-col-row-3", "children"),
     Input("reqd_bmr", "data"),
-    Input("diet-cal", "data")
+    Input("diet-cal", "data"),
+    prevent_initial_call=True
 )
 def get_calorie_difference(bmr, planned_cal):
     diff = round(planned_cal-bmr,2)
@@ -178,6 +179,34 @@ def on_submit_click(user, planDate, dropdowns, inputs, submit_button):
     dbManager.upload_dataframe(nutrients_df, "history")
     dbManager.close_connection()
     return ""
+
+
+@callback(
+    Output("gender-input", "value"),
+    Output("age-input", "value"),
+    Output("weight-input", "value"),
+    Output("height-input", "value"),
+    Input("user-dropdown", "value")
+)
+def on_user_selection_change(user):
+    dbManager = DbManagement()
+
+    gender, age, weight, height =dbManager.get_user_bio(user)
+    dbManager.close_connection()
+
+    return [gender, age, weight, height]
+
+
+@callback(
+Input("user-dropdown", "value"),
+    Input("weight-input", "value"),
+    Input("height-input", "value"),
+    Input("update", "n_clicks")
+)
+def on_update_click(user, weight, height, n_click):
+    dbManager = DbManagement()
+    dbManager.update_user_weight_height(user, weight, height)
+    dbManager.close_connection()
 
 
 if __name__ == "__main__":

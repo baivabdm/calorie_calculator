@@ -46,7 +46,7 @@ def create_weight_input_widget():
     userLabel = html.Label("User", "user-label")
     userDropDowm = dcc.Dropdown(userList, placeholder="Select User", value="guest_user", clearable=False,
                                 id="user-dropdown", className="user-drop")
-    today = dt.today()
+    today = dt.today().date()
     dateLabel = html.Label("Plan Date", "date-label")
     dateInput =  dcc.DatePickerSingle(
         id='plan-date-picker',
@@ -63,13 +63,15 @@ def create_weight_input_widget():
     genderRadio = dcc.RadioItems(["Male", "Female"], "Male", inline=True, id="gender-input")
     weightLabel = html.Label("Current Weight(Kg)", "weight-label")
     weightInput = dcc.Input(placeholder="Weight", type="number", id=f"weight-input", className="weight-input")
+    updateUserStatsButton = html.Button(children="Update", id='update', n_clicks=0, className="planner-btn")
     row0 = dbc.Row(children=[userLabel, userDropDowm], id=f"user-row-1", className="user-row")
     row1 = dbc.Row(children=[dateLabel, dateInput], id=f"date-row-1", className="date-row")
     row2 = dbc.Row(children=[weightLabel, weightInput], id=f"weight-row-1", className="weight-row")
     row3 = dbc.Row(children=[ageLabel, ageInput], id=f"age-row-1", className="age-row")
     row4 = dbc.Row(children=[heightLabel, heightInput], id=f"height-row-1", className="height-row")
     row5 = dbc.Row(children=[genderLabel, genderRadio], id=f"gender-row-1", className="gender-row")
-    return [row0, row1, row2, row3, row4, row5]
+    row6 = dbc.Row(children=[updateUserStatsButton], id="update-row-1", className="update-row")
+    return [row0, row1, row2, row3, row4, row5, row6]
 
 
 def create_form_row(id_count=1):

@@ -72,11 +72,11 @@ def on_row_delete_click(row1_children, row2_children, n_clicks_dynamic):
 
     n_clicks_vector = np.array(n_clicks_dynamic)
     clickedButton = n_clicks_vector.argmax()+1
-    if clickedButton == 1 and len(row1_children) == 7 and n_clicks_vector.max() != 0:
+    if clickedButton == 1 and len(row1_children) == 8 and n_clicks_vector.max() != 0:
         row1_children.pop()
-    elif len(row1_children) == 6 and n_clicks_vector.max() != 0:
-        row2_children.pop(clickedButton-1)
     elif len(row1_children) == 7 and n_clicks_vector.max() != 0:
+        row2_children.pop(clickedButton-1)
+    elif len(row1_children) == 8 and n_clicks_vector.max() != 0:
         row2_children.pop(clickedButton-2)
     else:
         raise PreventUpdate

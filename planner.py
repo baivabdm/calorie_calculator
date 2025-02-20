@@ -46,7 +46,7 @@ def create_weight_input_widget():
     userLabel = html.Label("User", "user-label")
     userDropDowm = dcc.Dropdown(userList, placeholder="Select User", value="guest_user", clearable=False,
                                 id="user-dropdown", className="user-drop")
-    today = dt.today()
+    today = dt.today().date()
     dateLabel = html.Label("Plan Date", "date-label")
     dateInput =  dcc.DatePickerSingle(
         id='plan-date-picker',

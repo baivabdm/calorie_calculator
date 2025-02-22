@@ -4,6 +4,7 @@ from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
 import frontpage as fp
 import planner as pl
+import history as hst
 import webbrowser as wb
 from threading import Timer
 import threading as th
@@ -14,9 +15,12 @@ from datetime import date
 app = Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 app.title = "Calorie Calculator and Optimizer"
 app.layout = [
-    dcc.Store(id="reqd_bmr", data=0),
-    dcc.Store(id="diet-cal", data=0),
+    dcc.Store(id="reqd_bmr", data=None),
+    dcc.Store(id="diet-cal", data=None),
     dcc.Store(id="dummy-store",data=[]),
+    dcc.Store(id="food-level-history"),
+    dcc.Store(id="date-level-history"),
+    dcc.Store(id="date-level-history-long"),
     *fp.frontPageItems]
 
 
@@ -137,6 +141,9 @@ def calculate_kpis(dropdowns, inputs):
 def get_calorie_difference(bmr, planned_cal):
     diff = round(planned_cal-bmr,2)
 
+    if bmr is None or planned_cal is None:
+        return ""
+
     if diff < 0:
         diff_string = dbc.Row([html.H5("Calorie Deficit:", id="deficit-heading"), html.H6(f"{diff} Cal", id="deficit-value")])
     elif diff > 0:
@@ -153,9 +160,11 @@ def get_calorie_difference(bmr, planned_cal):
     State("plan-date-picker", "date"),
     State({"type": "form-dropdown", "index": ALL}, "value"),
     State({"type": "form-input", "index": ALL}, "value"),
+    State("reqd_bmr", "data"),
+    State("weight-input", "value"),
     Input("submit", "n_clicks")
 )
-def on_submit_click(user, planDate, dropdowns, inputs, submit_button):
+def on_submit_click(user, planDate, dropdowns, inputs, bmr, weight, submit_button):
     contents = {}
     planDate = planDate[:planDate.find("T") if planDate.find("T") != -1 else len(planDate)].split("-")
     planDate = date(int(planDate[0]), int(planDate[1]), int(planDate[2]))
@@ -170,6 +179,8 @@ def on_submit_click(user, planDate, dropdowns, inputs, submit_button):
         return [[], 0]
 
     nutrients_df = pl.calculate_diet_kpis(contents)[2]
+    nutrients_df["bmr"] = bmr
+    nutrients_df["weight"] = weight
     currentCols = list(nutrients_df.columns)
     nutrients_df["user"] = user
     nutrients_df["date"] = planDate
@@ -198,15 +209,85 @@ def on_user_selection_change(user):
 
 
 @callback(
-Input("user-dropdown", "value"),
-    Input("weight-input", "value"),
-    Input("height-input", "value"),
+State("user-dropdown", "value"),
+    State("weight-input", "value"),
+    State("height-input", "value"),
     Input("update", "n_clicks")
 )
 def on_update_click(user, weight, height, n_click):
     dbManager = DbManagement()
     dbManager.update_user_weight_height(user, weight, height)
     dbManager.close_connection()
+
+
+@callback(
+    Output("food-level-history", "data"),
+    Output("date-level-history", "data"),
+    Output("date-level-history-long", "data"),
+    Input("hist-refresh", "n_clicks"),
+    Input("history-user-dropdown", "value"),
+    Input("hist-date-picker-range", "start_date"),
+    Input("hist-date-picker-range", "end_date")
+)
+def fetch_history(n_clicks, user, start_date, end_date):
+    dbManager = DbManagement()
+    datefoodlevel, datelevel, datelevelmelt = dbManager.get_user_history(user, start_date, end_date)
+    return datefoodlevel, datelevel, datelevelmelt
+
+@callback(
+    Output("hist-graph-row", "children"),
+    Output("hist-table-row", "children"),
+    Input("food-level-history", "data"),
+    Input("date-level-history", "data"),
+    Input("date-level-history-long", "data"),
+    Input("hist-bmr-switch","on"),
+    Input("hist-cal-switch","on"),
+    Input("hist-carb-switch","on"),
+    Input("hist-prot-switch","on"),
+    Input("hist-fat-switch","on"),
+    Input("hist-weight-switch","on"),
+    Input("hist-calDelta-switch","on"),
+)
+def populate_history(datefoodlevel, datelevel, datelevelmelt, bmr, cal, carb, prot, fat, weight, delta):
+    userHistory = (datefoodlevel, datelevel, datelevelmelt)
+    filter_dict = {
+        "bmr": bmr, "calorie": cal, "carbs": carb, "protein": prot, "fat": fat, "weight": weight, "delta": delta
+    }
+    fig, datelevelTable = hst.generate_chart(userHistory, filter=filter_dict)
+
+    graph = dcc.Graph(figure=fig)
+    graphTable = dash_table.DataTable(datelevelTable.to_dict("records"), [{"name": i, "id": i} for i in datelevelTable.columns], id="history-table")
+    return [graph, graphTable]
+
+
+@callback(
+    Output("hist-bmr-switch","on", allow_duplicate=True),
+    Output("hist-cal-switch","on", allow_duplicate=True),
+    Output("hist-carb-switch","on", allow_duplicate=True),
+    Output("hist-prot-switch","on", allow_duplicate=True),
+    Output("hist-fat-switch","on", allow_duplicate=True),
+    Output("hist-weight-switch","on", allow_duplicate=True),
+    Output("hist-calDelta-switch","on", allow_duplicate=True),
+    Input("hist-sel-all", "n_clicks"),
+    prevent_initial_call=True
+)
+def select_all_history(n_clicks):
+    return [True]*7
+
+@callback(
+    Output("hist-bmr-switch","on"),
+    Output("hist-cal-switch","on"),
+    Output("hist-carb-switch","on"),
+    Output("hist-prot-switch","on"),
+    Output("hist-fat-switch","on"),
+    Output("hist-weight-switch","on"),
+    Output("hist-calDelta-switch","on"),
+    Input("hist-sel-none", "n_clicks"),
+    prevent_initial_call=True
+)
+def select_none_history(n_clicks):
+    return [False]*7
+
 
 
 if __name__ == "__main__":

@@ -45,7 +45,7 @@
 }
 
 #submit{
-    margin-left: 50%;
+    margin-left: 0.5%;
     margin-bottom: 5%;
 }
 
@@ -102,6 +102,16 @@
     margin-left: 1%;
 }
 
+#date-label{
+    width: 39.6%;
+    padding-top: 1%;
+}
+
+#plan-date-picker{
+    width: auto;
+    margin-bottom: 1%;
+}
+
 .weight-row{
     margin-bottom: 2%;
 }
@@ -115,6 +125,115 @@
 }
 
 #add-item{
-    margin-left: 50%;
+    margin-left: 40%;
     width: auto;
+}
+
+#height-label{
+    width: 41%;
+}
+
+#height-input{
+    width: 40%;
+}
+
+.height-row{
+    margin-bottom: 2%;
+}
+
+#age-label{
+    width: 41%;
+}
+
+#age-input{
+    width: 40%;
+}
+
+.age-row{
+    margin-bottom: 2%;
+}
+
+#gender-label{
+    width: 41%;
+}
+
+#gender-input{
+    width: 40%;
+}
+
+.gender-row{
+    margin-bottom: 2%;
+}
+
+#requirements-heading{
+    font-weight: bold;
+}
+
+#plan-heading{
+    font-weight: bold;
+    margin-top: 5%;
+}
+
+#planner-output-col-row-4{
+    margin-right: 5%;
+}
+
+#planner-output-col-row-3{
+    margin-top: 2%;
+}
+
+#deficit-heading{
+    font-weight: bold;
+    width: auto;
+    color: rgb(0, 61, 153);
+}
+
+#deficit-value{
+    font-weight: bold;
+    width: auto;
+    margin-top: 0.3%;
+    color: rgb(0, 61, 153);
+}
+
+#surplus-heading{
+    font-weight: bold;
+    width: auto;
+    color: rgb(137, 0, 0);
+}
+
+#surplus-value{
+    font-weight: bold;
+    width: auto;
+    margin-top: 0.3%;
+    color: rgb(137, 0, 0);
+}
+
+#balance-heading{
+    font-weight: bold;
+    width: auto;
+    color: rgb(0, 153, 33);
+}
+
+#balance-value{
+    font-weight: bold;
+    width: auto;
+    margin-top: 0.3%;
+    color: rgb(0, 153, 33);
+}
+
+#planner-output-col-row-4{
+    margin-top: 2%;
+}
+
+#user-label{
+    width: 42.2%;
+    padding-top: 1.5%;
+}
+
+#user-row-1{
+    margin-bottom: 1%;
+}
+
+#user-dropdown{
+    width: 41.5% !important;
 }

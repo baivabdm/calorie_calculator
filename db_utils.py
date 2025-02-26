@@ -2,7 +2,6 @@ import sqlite3 as sql
 import pandas as pd
 import numpy as np
 from datetime import date, datetime as dt
-from jinja2.filters import do_batch
 
 
 class DbManagement:
@@ -12,6 +11,35 @@ class DbManagement:
         self.connection = sql.connect(r".\planner.db")
         self.usersFetched = False
         self.cursor = self.connection.cursor()
+
+        self.cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+        user blob,
+        name text,
+        gender text,
+        dob blob,
+        weight real,
+        height real
+        )
+        """)
+        self.connection.commit()
+
+        self.cursor.execute("""
+        CREATE TABLE IF NOT EXISTS history (
+        user blob,
+        date blob,
+        food text,
+        qty real,
+        unit text,
+        calorie real,
+        carbs real,
+        protein real,
+        fat real,
+        bmr real,
+        weight real
+        )
+        """)
+        self.connection.commit()
 
 
     def fetch_users(self):

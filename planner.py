@@ -5,9 +5,6 @@ from numpy import array
 from datetime import datetime as dt, date
 from db_utils import DbManagement
 
-dbManager = DbManagement()
-userList = dbManager.get_user_list()
-dbManager.close_connection()
 
 db = pd.read_excel("./assets/food_calorie_db.xlsx")
 food = list(db["food"])
@@ -43,6 +40,10 @@ contents = [
 ]
 
 def create_weight_input_widget():
+    dbManager = DbManagement()
+    userList = dbManager.get_user_list()
+    dbManager.close_connection()
+    
     userLabel = html.Label("User", "user-label")
     userDropDowm = dcc.Dropdown(userList, placeholder="Select User", value="guest_user", clearable=False,
                                 id="user-dropdown", className="user-drop")

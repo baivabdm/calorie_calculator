@@ -1,0 +1,65 @@
+#new-user{
+    background-color: rgb(137, 0, 0);
+}
+#new-user:hover{
+    background-color: rgb(163, 51, 51);
+    color: rgb(255, 255, 255);
+    
+}
+
+#new-user:active{
+    background-color: rgb(97, 2, 2);
+    color: rgb(255, 255, 255);
+    transform: translateY(4px);
+    
+}
+
+#save-manage-user{
+    background-color: rgb(137, 0, 0);
+    /*margin-left: 40%;
+    width: 20%;*/
+}
+
+#save-manage-user:hover{
+    background-color: rgb(163, 51, 51);
+    color: rgb(255, 255, 255);
+    
+}
+
+#save-manage-user:active{
+    background-color: rgb(97, 2, 2);
+    color: rgb(255, 255, 255);
+    transform: translateY(4px);
+    
+}
+
+#db-manage-form-div{
+    margin-left: 1%;
+    margin-top: 2%;
+}
+
+.new-manage-form-class{
+    margin-bottom: 1.5%;
+    
+}
+
+/*#db-manage-username{
+    min-width: 80px;
+    max-width: 202px;
+    margin-left: 0.05%;
+}*/
+
+#username-manage-dropdown{
+    width: 196px !important;
+    margin-left: 0.6% !important;
+}
+
+#username-manage-input{
+    max-width: 186px;
+    margin-left: 0.6%;
+}
+
+#user-manage-availability{
+    font-size: small;
+    margin-left: 0.1%;
+}

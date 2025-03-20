@@ -5,12 +5,26 @@ import dash_bootstrap_components as dbc
 import frontpage as fp
 import planner as pl
 import history as hst
+import db_management as dbm
 import webbrowser as wb
 from threading import Timer
 import threading as th
 import numpy as np
 from db_utils import DbManagement
 from datetime import date
+from PyQt6.QtWidgets import QApplication, QFileDialog
+import shutil
+
+
+def open_file_dialog(openType="Folder"):
+    app = QApplication([])
+
+    if openType.lower() == "folder":
+        directory = QFileDialog.getExistingDirectory(None, "Select backup location")
+    else:
+        directory = QFileDialog.getOpenFileName(None, "Select backup database to restore", filter = "Database (*.db)")
+    app.quit()
+    return directory
 
 app = Dash(external_stylesheets=[dbc.themes.BOOTSTRAP])
 app.title = "Calorie Calculator and Optimizer"
@@ -21,6 +35,7 @@ app.layout = [
     dcc.Store(id="food-level-history"),
     dcc.Store(id="date-level-history"),
     dcc.Store(id="date-level-history-long"),
+    dcc.Store(id="new-user-form-state", data=0),
     *fp.frontPageItems]
 
 
@@ -155,14 +170,15 @@ def get_calorie_difference(bmr, planned_cal):
 
 
 @callback(
-    Output("dummy-store", "data"),
+    Output("dummy-store", "data", allow_duplicate=True),
     State("user-dropdown", "value"),
     State("plan-date-picker", "date"),
     State({"type": "form-dropdown", "index": ALL}, "value"),
     State({"type": "form-input", "index": ALL}, "value"),
     State("reqd_bmr", "data"),
     State("weight-input", "value"),
-    Input("submit", "n_clicks")
+    Input("submit", "n_clicks"),
+    prevent_initial_call=True
 )
 def on_submit_click(user, planDate, dropdowns, inputs, bmr, weight, submit_button):
     contents = {}
@@ -202,7 +218,7 @@ def on_submit_click(user, planDate, dropdowns, inputs, bmr, weight, submit_butto
 def on_user_selection_change(user):
     dbManager = DbManagement()
 
-    gender, age, weight, height =dbManager.get_user_bio(user)
+    name, gender, dob, age, weight, height =dbManager.get_user_bio(user)
     dbManager.close_connection()
 
     return [gender, age, weight, height]
@@ -224,6 +240,7 @@ def on_update_click(user, weight, height, n_click):
     Output("food-level-history", "data"),
     Output("date-level-history", "data"),
     Output("date-level-history-long", "data"),
+    Output("history-user-dropdown", "options"),
     Input("hist-refresh", "n_clicks"),
     Input("history-user-dropdown", "value"),
     Input("hist-date-picker-range", "start_date"),
@@ -231,8 +248,10 @@ def on_update_click(user, weight, height, n_click):
 )
 def fetch_history(n_clicks, user, start_date, end_date):
     dbManager = DbManagement()
+    userList = dbManager.get_user_list()
     datefoodlevel, datelevel, datelevelmelt = dbManager.get_user_history(user, start_date, end_date)
-    return datefoodlevel, datelevel, datelevelmelt
+    dbManager.close_connection()
+    return datefoodlevel, datelevel, datelevelmelt, userList
 
 @callback(
     Output("hist-graph-row", "children"),
@@ -249,15 +268,18 @@ def fetch_history(n_clicks, user, start_date, end_date):
     Input("hist-calDelta-switch","on"),
 )
 def populate_history(datefoodlevel, datelevel, datelevelmelt, bmr, cal, carb, prot, fat, weight, delta):
-    userHistory = (datefoodlevel, datelevel, datelevelmelt)
-    filter_dict = {
-        "bmr": bmr, "calorie": cal, "carbs": carb, "protein": prot, "fat": fat, "weight": weight, "delta": delta
-    }
-    fig, datelevelTable = hst.generate_chart(userHistory, filter=filter_dict)
+    try:
+        userHistory = (datefoodlevel, datelevel, datelevelmelt)
+        filter_dict = {
+            "bmr": bmr, "calorie": cal, "carbs": carb, "protein": prot, "fat": fat, "weight": weight, "delta": delta
+        }
+        fig, datelevelTable = hst.generate_chart(userHistory, filter=filter_dict)
 
-    graph = dcc.Graph(figure=fig)
-    graphTable = dash_table.DataTable(datelevelTable.to_dict("records"), [{"name": i, "id": i} for i in datelevelTable.columns], id="history-table")
-    return [graph, graphTable]
+        graph = dcc.Graph(figure=fig)
+        graphTable = dash_table.DataTable(datelevelTable.to_dict("records"), [{"name": i, "id": i} for i in datelevelTable.columns], id="history-table")
+        return [graph, graphTable]
+    except:
+        return ["", ""]
 
 
 @callback(
@@ -289,11 +311,180 @@ def select_none_history(n_clicks):
     return [False]*7
 
 
+@callback(
+    Output("db-manage-username", "children", allow_duplicate=True),
+    Output("db-manage-name", "children", allow_duplicate=True),
+    Output("db-manage-gender", "children", allow_duplicate=True),
+    Output("db-manage-dob", "children", allow_duplicate=True),
+    Output("db-manage-weight", "children", allow_duplicate=True),
+    Output("db-manage-height", "children", allow_duplicate=True),
+    Output("db-manage-save", "children", allow_duplicate=True),
+    Output("new-user-form-state", "data", allow_duplicate=True),
+    Output("new-user", "children", allow_duplicate=True),
+    Output("modify-user", "children", allow_duplicate=True),
+    Input("new-user", "n_clicks"),
+    State("modify-user", "children"),
+    State("new-user-form-state", "data"),
+    prevent_initial_call = True
+)
+def add_new_user_form(n_clicks, modify_user_text, new_user_form_state):
+
+    new_user_form = ["", "", "", "", "", "", "", 0, "New User", "Modify User"]
+
+    if new_user_form_state == 0 or modify_user_text.lower() == "cancel":
+        new_user_form = dbm.create_new_or_modify_form()
+        new_user_form.extend([1, "Cancel", "Modify User"])
+
+    return new_user_form
+
+
+@callback(
+    Output("db-manage-username", "children"),
+    Output("db-manage-name", "children"),
+    Output("db-manage-gender", "children"),
+    Output("db-manage-dob", "children"),
+    Output("db-manage-weight", "children"),
+    Output("db-manage-height", "children"),
+    Output("db-manage-save", "children"),
+    Output("new-user-form-state", "data"),
+    Output("modify-user", "children"),
+    Output("new-user", "children"),
+    Input("modify-user", "n_clicks"),
+    State("new-user", "children"),
+    State("new-user-form-state", "data"),
+    prevent_initial_call=True
+)
+def add_modify_user_form(n_clicks, new_user_text, new_user_form_state):
+    modify_user_form = ["", "", "", "", "", "", "", 0, "Modify User", "New User"]
+
+    if new_user_form_state == 0 or new_user_text.lower() == "cancel":
+        modify_user_form = dbm.create_new_or_modify_form("modify")
+        modify_user_form.extend([1, "Cancel", "New User"])
+
+    return modify_user_form
+
+
+@callback(
+    Output("user-manage-availability", "children"),
+    Input("username-manage-input", "value"),
+)
+def check_username_avaialbilty(username):
+
+    if len(username) > 0:
+        dbManager = DbManagement()
+        usernameExists = dbManager.check_username_exists(username)
+        dbManager.close_connection()
+
+        if usernameExists:
+            return "this username is not avaialble"
+        else:
+            return "this username is available"
+    else:
+        return ""
+
+
+@callback(
+    State("username-manage-input", "value"),
+    State("user-manage-availability", "children"),
+    State("name-manage-input", "value"),
+    State("gender-manage-input", "value"),
+    State("dob-manage-picker", "date"),
+    State("weight-manage-input", "value"),
+    State("height-manage-input", "value"),
+    Input("save-new-user", "n_clicks")
+)
+def add_user_data(username, availability, name, gender, dob, weight, height, n_click):
+
+    if "not" not in availability.lower():
+        if gender == "Male":
+            gender = "M"
+        else:
+            gender = "F"
+
+        if n_click > 0:
+            dbManager = DbManagement()
+            dbManager.add_user(username, name, gender, dob, weight, height)
+            dbManager.close_connection()
+
+
+@callback(
+    Output("name-manage-input", "value"),
+    Output("gender-manage-input", "value"),
+    Output("dob-manage-picker", "date"),
+    Output("weight-manage-input", "value"),
+    Output("height-manage-input", "value"),
+    Input("username-manage-dropdown", "value"),
+)
+def fetch_user_data_for_modify_form(username):
+    dbManager = DbManagement()
+    name, gender, dob, age, weight, height = dbManager.get_user_bio(username)
+    dbManager.close_connection()
+
+    return name, gender, dob, weight, height
+
+
+@callback(
+    Output("dummy-store", "data", allow_duplicate=True),
+    State("username-manage-dropdown", "value"),
+    State("name-manage-input", "value"),
+    State("gender-manage-input", "value"),
+    State("dob-manage-picker", "date"),
+    State("weight-manage-input", "value"),
+    State("height-manage-input", "value"),
+    Input("save-modified-user", "n_clicks"),
+    prevent_initial_call=True
+)
+def modify_user_data(username, name, gender, dob, weight, height, n_click):
+    if gender == "Male":
+        gender = "M"
+    else:
+        gender = "F"
+
+    if n_click > 0:
+        dbManager = DbManagement()
+        dbManager.modify_user(username, name, gender, dob, weight, height)
+        dbManager.close_connection()
+
+    return []
+
+
+@callback(
+    Output("db-manage-toast", "children", allow_duplicate=True),
+    Input("backup-db", "n_clicks"),
+    prevent_initial_call=True
+)
+def backup_db(n_click):
+    destination = open_file_dialog()
+    source = "./planner.db"
+
+    if destination != "":
+        shutil.copy(source, destination)
+
+    return dbm.backup_restore_toast(destination, "backup")
+
+
+@callback(
+    Output("db-manage-toast", "children", allow_duplicate=True),
+    Input("restore-db", "n_clicks"),
+    prevent_initial_call=True
+)
+def restore_db(n_clicks):
+    source = open_file_dialog("file")[0]
+    destination = "./"
+
+    if source != "":
+        shutil.copy(source, destination)
+
+    return dbm.backup_restore_toast(source, "restore")
+
 
 if __name__ == "__main__":
     port=33115
     debugMode = False
     open_browser = Timer(3, wb.open, [f"http://127.0.0.1:{port}"]).run
-    openBrowserThread = th.Thread(target=open_browser)
-    openBrowserThread.start()
-    app.run(debug=debugMode, port=port, use_reloader=False)
+    useReloader=True
+    if not debugMode:
+        openBrowserThread = th.Thread(target=open_browser)
+        openBrowserThread.start()
+        useReloader = False
+    app.run(debug=debugMode, port=port, use_reloader=useReloader)

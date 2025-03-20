@@ -2,7 +2,6 @@ import sqlite3 as sql
 import pandas as pd
 import numpy as np
 from datetime import date, datetime as dt
-from jinja2.filters import do_batch
 
 
 class DbManagement:
@@ -12,6 +11,35 @@ class DbManagement:
         self.connection = sql.connect(r".\planner.db")
         self.usersFetched = False
         self.cursor = self.connection.cursor()
+
+        self.cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+        user blob,
+        name text,
+        gender text,
+        dob blob,
+        weight real,
+        height real
+        )
+        """)
+        self.connection.commit()
+
+        self.cursor.execute("""
+        CREATE TABLE IF NOT EXISTS history (
+        user blob,
+        date blob,
+        food text,
+        qty real,
+        unit text,
+        calorie real,
+        carbs real,
+        protein real,
+        fat real,
+        bmr real,
+        weight real
+        )
+        """)
+        self.connection.commit()
 
 
     def fetch_users(self):
@@ -34,18 +62,19 @@ class DbManagement:
         SELECT * FROM users WHERE user = '{user}'
         """
         df = pd.read_sql(sql, self.connection)
+        name = df["name"].iloc[0]
         gender = df["gender"].iloc[0]
         dob = df["dob"].iloc[0]
         weight = df["weight"].iloc[0]
         height = df["height"].iloc[0]
 
-        dob = dob.split("-")
-        dob = date(int(dob[0]), int(dob[1]), int(dob[2]))
-        age = int(((dt.today().date() - dob) / 365).days)
+        dob2 = dob.split("-")
+        dob2 = date(int(dob2[0]), int(dob2[1]), int(dob2[2]))
+        age = int(((dt.today().date() - dob2) / 365).days)
 
         gender = "Male" if gender == "M" else "Female"
 
-        return gender, age, weight, height
+        return name, gender, dob, age, weight, height
 
 
     def update_user_weight_height(self, user, weight, height):
@@ -108,6 +137,44 @@ class DbManagement:
         return datefoodlevel.to_dict("records"), datelevel.to_dict("records"), datelevelmelt.to_dict("records")
 
 
+    def add_user(self, username, name, gender, dob, weight, height):
+
+        sql = f"""
+        INSERT INTO users (user, name, gender, dob, weight, height)
+        VALUES ('{username}', '{name}', '{gender}', '{dob}', {weight}, {height})
+        """
+
+        self.cursor.execute(sql)
+        self.connection.commit()
+
+    def modify_user(self, username, name, gender, dob, weight, height):
+
+        sql = f"""
+                UPDATE users
+                SET 
+                    name = '{name}',
+                    gender = '{gender}',
+                    dob = '{dob}',
+                    weight = {weight},
+                    height = {height}
+                WHERE
+                    user = '{username}'
+
+                """
+        self.cursor.execute(sql)
+
+        self.connection.commit()
+
+    def check_username_exists(self, username):
+
+        sql = f"SELECT count(*) as user_count FROM users WHERE user = '{username}'"
+        df = pd.read_sql(sql, self.connection)
+        count = df["user_count"][0]
+
+        if count == 1:
+            return True
+        else:
+            return False
 
     def close_connection(self):
         self.connection.close()

@@ -449,7 +449,7 @@ def modify_user_data(username, name, gender, dob, weight, height, n_click):
 
 
 @callback(
-    Output("dummy-store", "data", allow_duplicate=True),
+    Output("db-manage-toast", "children", allow_duplicate=True),
     Input("backup-db", "n_clicks"),
     prevent_initial_call=True
 )
@@ -460,11 +460,11 @@ def backup_db(n_click):
     if destination != "":
         shutil.copy(source, destination)
 
-    return 0
+    return dbm.backup_restore_toast(destination, "backup")
 
 
 @callback(
-    Output("dummy-store", "data", allow_duplicate=True),
+    Output("db-manage-toast", "children", allow_duplicate=True),
     Input("restore-db", "n_clicks"),
     prevent_initial_call=True
 )
@@ -475,7 +475,7 @@ def restore_db(n_clicks):
     if source != "":
         shutil.copy(source, destination)
 
-    return 0
+    return dbm.backup_restore_toast(source, "restore")
 
 
 if __name__ == "__main__":

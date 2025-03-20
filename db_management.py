@@ -25,6 +25,7 @@ contents = [
                  html.Div(id="db-manage-weight", className="new-manage-form-class"),
                  html.Div(id="db-manage-height", className="new-manage-form-class"),
                  html.Div(id="db-manage-save", className="new-manage-form-class"),
+                 html.Div(id="db-manage-toast", className="new-manage-form-class")
                 ]
              )
 ]
@@ -63,3 +64,25 @@ def create_new_or_modify_form(formType="new"):
                      heightInput, saveButton]
 
     return returnObj
+
+def backup_restore_toast(filepath, toastType = "Backup"):
+    toastMessage = dbc.Toast(
+        [html.P(f"Database Restored from {filepath}")],
+        id="auto-toast",
+        header="Restored",
+        icon="primary",
+        duration=4000,
+        is_open=True,
+        )
+    
+    if toastType.lower() == "backup":
+        toastMessage = dbc.Toast(
+        [html.P(f"Database Backed up at {filepath}")],
+        id="auto-toast",
+        header="Backed up",
+        icon="primary",
+        duration=4000,
+        is_open=True,
+        )
+
+    return toastMessage

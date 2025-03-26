@@ -9,7 +9,7 @@
 Calorie Calculator & Optimizer is a helping tool to assist you track your macros & calories to assist you with your weight loss/gain journey. It's a web app built on python with web frontend built using the dash framework and backend database built using sqlite. The food and nutrients info is saved in an excel for the end user to add items according to their food basket.
 
 ## Download for windows
-Click the link here or navigate to _releases_ section of the github page and download the binary/exe of the latest build
+Click the link [here](https://github.com/baivabdm/calorie_calculator/releases/tag/v1.0.1) or navigate to _releases_ section of the github page and download the binary/exe of the latest build
 
 ## Running from code
 - Make sure python is installed in your system
